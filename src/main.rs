@@ -1,5 +1,6 @@
 use std::io::prelude::*;
 use std::net::TcpListener;
+use serde_json::Value;
 
 fn get_response_header<'a>() -> &'a str {
     r#"
@@ -161,11 +162,40 @@ fn get_response_footer<'a>() -> &'a str {
 "#
 }
 
+fn get_error_response<'a>() -> &'a str {
+    r#"
+{
+  "holeNumber": "hole12",
+  "archiveFilename": "Archive_211001_140321",
+  "Results": "ERROR",
+  "Details": "This error occurred because ...."
+}
+"#
+}
+
 const REQUEST_PORT: u32 = 8080;
 const RESPONSE_PORT: u32 = 8081;
 
 fn get_url(port: u32) -> String {
     format!("localhost:{}", port)
+}
+
+/// parse_json_request: parse json request
+/// return true on error false on success
+fn parse_json_request<'a>(r: &'a str) -> bool {
+    let r_json = serde_json::from_str::<Value>(&r);
+    match r_json {
+        Ok(json) => {
+            let pp =
+                serde_json::to_string_pretty(&json).unwrap();
+            println!("Received Request Json Parsed: {}", pp);
+            true
+        },
+        Err(e) => {
+            println!("Error: parsing json request: {}", e);
+            false
+        }
+    }
 }
 
 fn handle_connections(request_listener: TcpListener, 
@@ -179,18 +209,23 @@ fn handle_connections(request_listener: TcpListener,
                 request_stream.read(&mut buffer).unwrap();
 
                 let request = String::from_utf8_lossy(&buffer);
+                let error = parse_json_request(&request);
                 println!("received=[{}]", request);
 
                 println!("accepting response connections on {}", RESPONSE_PORT);
-                for response_stream in response_listener.incoming() {
-                    match response_stream {
-                        Ok(mut response_stream) => {
-                            let response_header = get_response_header();
-                            let response_items = get_response_items();
-                            let response_footer = get_response_footer();
+                let response_stream = response_listener.accept();
+                match response_stream {
+                    Ok((mut response_stream, _addr)) => {
 
+                        if error {
+                            let error_response = get_error_response();
+                            response_stream.write(error_response.as_bytes()).unwrap();
+                        } else {
+                            let response_header = get_response_header();
                             println!("sending response_header=[{}]", response_header);
                             response_stream.write(response_header.as_bytes()).unwrap();
+                            let response_items = get_response_items();
+                            let response_footer = get_response_footer();
                             for response_item in response_items.iter() {
                                 println!("sending response_item=[{}]", response_item);
                                 response_stream.write(response_item.as_bytes()).unwrap();
@@ -199,10 +234,10 @@ fn handle_connections(request_listener: TcpListener,
                             response_stream.write(response_footer.as_bytes()).unwrap();
                             response_stream.flush().unwrap();
                         }
-                        Err(e) => {
-                            println!("Error: response connection failure: {:?}", e);
-                            break;
-                        }
+                    }
+                    Err(e) => {
+                        println!("Error: response connection failure: {:?}", e);
+                        break;
                     }
                 }
             }
