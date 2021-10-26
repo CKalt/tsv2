@@ -171,6 +171,7 @@ fn get_url(port: u32) -> String {
 fn handle_connections(request_listener: TcpListener, 
                       response_listener: TcpListener) {
 
+    println!("accepting request connections on {}", REQUEST_PORT);
     for request_stream in request_listener.incoming() {
         match request_stream {
             Ok(mut request_stream) => {
@@ -180,6 +181,7 @@ fn handle_connections(request_listener: TcpListener,
                 let request = String::from_utf8_lossy(&buffer);
                 println!("received=[{}]", request);
 
+                println!("accepting response connections on {}", RESPONSE_PORT);
                 for response_stream in response_listener.incoming() {
                     match response_stream {
                         Ok(mut response_stream) => {
