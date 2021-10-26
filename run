@@ -1,0 +1,5 @@
+#!/bin/sh
+cargo run --release -- "${@:1}" 2>&1 | tee tsv2.out
+#export RAYON_NUM_THREADS=20; cargo run --release 2>&1 | tee tsv2.out
+#cargo run --release > tsv2.out
+vi tsv2.out
