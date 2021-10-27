@@ -181,7 +181,7 @@ fn get_url(port: u32) -> String {
 }
 
 /// parse_json_request: parse json request
-/// return true on error false on success
+/// return value is error state (true for error)
 fn parse_json_request<'a>(r: &'a str) -> bool {
     let r_json = serde_json::from_str::<Value>(&r);
     match r_json {
@@ -189,11 +189,11 @@ fn parse_json_request<'a>(r: &'a str) -> bool {
             let pp =
                 serde_json::to_string_pretty(&json).unwrap();
             println!("Received Request Json Parsed: {}", pp);
-            true
+            false
         },
         Err(e) => {
             println!("Error: parsing json request: {}", e);
-            false
+            true
         }
     }
 }
@@ -211,12 +211,12 @@ fn handle_connections(request_listener: TcpListener,
                 let request = String::from_utf8_lossy(&buffer);
                 let error = parse_json_request(&request);
                 println!("received=[{}]", request);
-
+                println!("error={}", error);
                 println!("accepting response connections on {}", RESPONSE_PORT);
+
                 let response_stream = response_listener.accept();
                 match response_stream {
                     Ok((mut response_stream, _addr)) => {
-
                         if error {
                             let error_response = get_error_response();
                             response_stream.write(error_response.as_bytes()).unwrap();
