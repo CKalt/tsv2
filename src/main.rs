@@ -208,21 +208,29 @@ fn handle_connections(request_listener: TcpListener,
         match request_stream {
             Ok(mut request_stream) => {
                 // read exactly 8 bytes for subsequent content length
+                // and convert them from a hex number to a usize
                 let mut len_buf: [u8; 8] = [0; 8];
                 request_stream.read_exact(&mut len_buf).unwrap();
+                println!("8 bytes read = {:?}", len_buf);
 
                 let len_str = str::from_utf8(&len_buf).unwrap();
                 let bytes_to_read: usize
                     = usize::from_str_radix(len_str, 16).unwrap();
-                println!("bytes_to_read=[{}]", bytes_to_read);
+                println!("converts to hex str={} or bytes_to_read={}", len_str,
+                    bytes_to_read);
 
+                // read exactly `bytes_to_read` len and error if not 
+                // valid json
                 let mut request_buf = vec![0u8; bytes_to_read];
                 request_stream.read_exact(&mut request_buf).unwrap();
                 let request = str::from_utf8(&request_buf).unwrap();
-                println!("received=[{}]", request);
+                println!("{} bytes received=[{}]", bytes_to_read, request);
 
                 let error = parse_json_request(&request);
-                println!("error={}", error);
+
+                println!("{}", if error { "invalid JSON" } else { "valid JSON" });
+
+
                 println!("accepting response connections on {}", RESPONSE_PORT);
 
                 let response_stream = response_listener.accept();

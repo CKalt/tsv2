@@ -1,5 +1,171 @@
    Compiling tsv2 v0.1.0 (/home/chris/projects/rust/tsv2)
-    Finished release [optimized] target(s) in 0.87s
+    Finished release [optimized] target(s) in 0.76s
      Running `target/release/tsv2`
 accepting request connections on 8080
-READ CALL POINT
+8 bytes read = [48, 48, 48, 48, 48, 48, 97, 53]
+converts to hex str=000000a5 or bytes_to_read=165
+165 bytes received=[{"archiveFilename":"Archive_211001_140321","archivePath":"./path/to/archive/file/","command":"RSHOT","holeNumber":"hole3","objectType":"eventJSON","siteCode":"ds12"}]
+Received Request Json Parsed: {
+  "archiveFilename": "Archive_211001_140321",
+  "archivePath": "./path/to/archive/file/",
+  "command": "RSHOT",
+  "holeNumber": "hole3",
+  "objectType": "eventJSON",
+  "siteCode": "ds12"
+}
+valid JSON
+accepting response connections on 8081
+sending response_header=[
+{
+  "holeNumber": "hole12",
+  "archiveFilename": "Archive_211001_140321",
+  "archiveTickCount": "845"
+}
+]
+sending response_item=[
+{
+   "confidence" : [
+      0,
+      0,
+      0,
+      0
+   ],
+   "digits" : [
+      -1,
+      -1,
+      -1,
+      -1
+   ],
+   "event_count" : 1,
+   "events" : [
+      "TEE_RECT"
+   ],
+   "label" : 0,
+   "m_sphere.radius" : 2.43117189407349,        // radius of ball
+   "pos" : [
+      35.7651251552959,
+      10.1044384407889,
+      1.99999999999943
+   ],
+   "shot_count" : 0,
+   "tick" : 104792,
+   "time_sec" : 55675.611559,
+   "vel" : [
+      -1.43420169544014,
+      -2.60537792789491,
+      0
+   ]
+}
+]
+sending response_item=[
+{
+   "confidence" : [
+      0,
+      0,
+      0,
+      0
+   ],
+   "digits" : [
+      -1,
+      -1,
+      -1,
+      -1
+   ],
+   "event_count" : 2,
+   "events" : [
+      "STOPPED"
+   ],
+   "label" : 0,
+   "m_sphere.radius" : 1.81232150395711,
+   "pos" : [
+      35.4990601849867,
+      10.256205154202,
+      1.16103691994983
+   ],
+   "shot_count" : 0,
+   "tick" : 104798,
+   "time_sec" : 55676.211993,
+   "vel" : [
+      0.223588302871757,
+      -0.378118526708058,
+      0
+   ]
+}
+]
+sending response_item=[
+{
+   "confidence" : [
+      0,
+      0,
+      0,
+      0
+   ],
+   "digits" : [
+      -1,
+      -1,
+      -1,
+      -1
+   ],
+   "event_count" : 3,
+   "events" : [
+      "MOVING"
+   ],
+   "label" : 0,
+   "m_sphere.radius" : 1.75107336044312,
+   "pos" : [
+      441.823339168579,
+      426.79626979401,
+      -12
+   ],
+   "shot_count" : 1,
+   "tick" : 105147,
+   "time_sec" : 55711.134976,
+   "vel" : [
+      -7.20664948775637,
+      -37.8342280718204,
+      0
+   ]
+}
+]
+sending response_item=[
+{
+   "confidence" : [
+      0,
+      0,
+      0,
+      0
+   ],
+   "digits" : [
+      -1,
+      -1,
+      -1,
+      -1
+   ],
+   "event_count" : 4,
+   "events" : [
+      "CUP"
+   ],
+   "label" : 0,
+   "m_sphere.radius" : 1.74538373947144,
+   "pos" : [
+      439.592231994182,
+      429.815724232712,
+      -12
+   ],
+   "shot_count" : 1,
+   "tick" : 105157,
+   "time_sec" : 55712.134988,
+   "vel" : [
+      0.119569116498076,
+      0.153994787065098,
+      0
+   ]
+}
+]
+sending response_footer=[
+{
+  "holeNumber": "hole12",
+  "archiveFilename": "Archive_211001_140321",
+  "Results": "DONE"
+}
+]
