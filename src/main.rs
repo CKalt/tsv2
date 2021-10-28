@@ -1,6 +1,7 @@
 use std::io::prelude::*;
 use std::net::TcpListener;
 use serde_json::Value;
+use std::str;
 
 fn get_response_header<'a>() -> &'a str {
     r#"
@@ -193,6 +194,7 @@ fn parse_json_request<'a>(r: &'a str) -> bool {
         },
         Err(e) => {
             println!("Error: parsing json request: {}", e);
+            println!("{:?}", r.as_bytes());
             true
         }
     }
@@ -205,12 +207,21 @@ fn handle_connections(request_listener: TcpListener,
     for request_stream in request_listener.incoming() {
         match request_stream {
             Ok(mut request_stream) => {
-                let mut buffer = [0; 1024];
-                request_stream.read(&mut buffer).unwrap();
+                // read exactly 8 bytes for subsequent content length
+                let mut len_buf: [u8; 8] = [0; 8];
+                request_stream.read_exact(&mut len_buf).unwrap();
 
-                let request = String::from_utf8_lossy(&buffer);
-                let error = parse_json_request(&request);
+                let len_str = str::from_utf8(&len_buf).unwrap();
+                let bytes_to_read: usize
+                    = usize::from_str_radix(len_str, 16).unwrap();
+                println!("bytes_to_read=[{}]", bytes_to_read);
+
+                let mut request_buf = vec![0u8; bytes_to_read];
+                request_stream.read_exact(&mut request_buf).unwrap();
+                let request = str::from_utf8(&request_buf).unwrap();
                 println!("received=[{}]", request);
+
+                let error = parse_json_request(&request);
                 println!("error={}", error);
                 println!("accepting response connections on {}", RESPONSE_PORT);
 

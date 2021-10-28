@@ -1,3 +1,5 @@
-    Finished release [optimized] target(s) in 0.13s
+   Compiling tsv2 v0.1.0 (/home/chris/projects/rust/tsv2)
+    Finished release [optimized] target(s) in 0.87s
      Running `target/release/tsv2`
 accepting request connections on 8080
+READ CALL POINT
