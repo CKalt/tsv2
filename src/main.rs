@@ -2,6 +2,21 @@ use std::io::prelude::*;
 use std::net::TcpListener;
 use serde_json::Value;
 use std::str;
+use structopt::StructOpt;
+
+const DEFAULT_REQUEST_PORT:  &str = "8080";
+const DEFAULT_RESPONSE_PORT: &str = "8081";
+
+#[derive(StructOpt, Debug)]
+#[structopt(name = "basic")]
+struct Opt {
+    #[structopt(default_value = DEFAULT_REQUEST_PORT, short = "i", long =           "input-port")]
+    input_port: u32,
+    #[structopt(default_value = DEFAULT_RESPONSE_PORT, short = "o", long =          "output-port")]
+    output_port: u32,
+    #[structopt(default_value = "localhost", short = "h", long = "host")]
+    host: String,
+}
 
 fn get_response_header<'a>() -> &'a str {
     r#"
@@ -174,11 +189,8 @@ fn get_error_response<'a>() -> &'a str {
 "#
 }
 
-const REQUEST_PORT: u32 = 8080;
-const RESPONSE_PORT: u32 = 8081;
-
-fn get_url(port: u32) -> String {
-    format!("localhost:{}", port)
+fn get_url(host: &String, port: u32) -> String {
+    format!("{}:{}", host, port)
 }
 
 /// parse_json_request: parse json request
@@ -201,9 +213,9 @@ fn parse_json_request<'a>(r: &'a str) -> bool {
 }
 
 fn handle_connections(request_listener: TcpListener, 
-                      response_listener: TcpListener) {
+                      response_listener: TcpListener,
+                      opt: Opt) {
 
-    println!("accepting request connections on {}", REQUEST_PORT);
     for request_stream in request_listener.incoming() {
         match request_stream {
             Ok(mut request_stream) => {
@@ -231,7 +243,7 @@ fn handle_connections(request_listener: TcpListener,
                 println!("{}", if error { "invalid JSON" } else { "valid JSON" });
 
 
-                println!("accepting response connections on {}", RESPONSE_PORT);
+                println!("accepting response connections on {}", opt.output_port);
 
                 let response_stream = response_listener.accept();
                 match response_stream {
@@ -269,8 +281,18 @@ fn handle_connections(request_listener: TcpListener,
 }
 
 fn main() {
-    let request_listener = TcpListener::bind(get_url(REQUEST_PORT)).unwrap();
-    let response_listener = TcpListener::bind(get_url(RESPONSE_PORT)).unwrap();
+    let opt = Opt::from_args();
+    println!("opt={:?}", opt);
 
-    handle_connections(request_listener, response_listener);
+    let request_listener =
+        TcpListener::bind(get_url(&opt.host, opt.input_port)).unwrap();
+    println!("accepting request connections on {}",
+        get_url(&opt.host, opt.input_port));
+
+    let response_listener =
+        TcpListener::bind(get_url(&opt.host, opt.output_port)).unwrap();
+    println!("accepting response connections on {}",
+        get_url(&opt.host, opt.output_port));
+
+    handle_connections(request_listener, response_listener, opt);
 }
