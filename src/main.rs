@@ -16,8 +16,11 @@ struct Opt {
     output_port: u32,
     #[structopt(default_value = "localhost", short = "h", long = "host")]
     host: String,
+    #[structopt(short = "z", long = "zero-fill-lens")]
+    zero_fill_lens: bool,
 }
 
+/*
 fn get_response_header<'a>() -> &'a str {
     r#"
 {
@@ -27,6 +30,7 @@ fn get_response_header<'a>() -> &'a str {
 }
 "#
 }
+*/
 
 fn get_response_items<'a>() -> Vec<&'a str> {
     vec![r#"
@@ -168,6 +172,7 @@ fn get_response_items<'a>() -> Vec<&'a str> {
 "#]
 }
 
+/*
 fn get_response_footer<'a>() -> &'a str {
     r#"
 {
@@ -177,6 +182,7 @@ fn get_response_footer<'a>() -> &'a str {
 }
 "#
 }
+*/
 
 fn get_error_response<'a>() -> &'a str {
     r#"
@@ -215,7 +221,6 @@ fn parse_json_request<'a>(r: &'a str) -> bool {
 fn handle_connections(request_listener: TcpListener, 
                       response_listener: TcpListener,
                       opt: Opt) {
-
     for request_stream in request_listener.incoming() {
         match request_stream {
             Ok(mut request_stream) => {
@@ -241,8 +246,6 @@ fn handle_connections(request_listener: TcpListener,
                 let error = parse_json_request(&request);
 
                 println!("{}", if error { "invalid JSON" } else { "valid JSON" });
-
-
                 println!("accepting response connections on {}", opt.output_port);
 
                 let response_stream = response_listener.accept();
@@ -252,18 +255,29 @@ fn handle_connections(request_listener: TcpListener,
                             let error_response = get_error_response();
                             response_stream.write(error_response.as_bytes()).unwrap();
                         } else {
-                            let response_header = get_response_header();
-                            println!("sending response_header=[{}]", response_header);
-                            response_stream.write(response_header.as_bytes()).unwrap();
+                            //let response_header = get_response_header();
+                            //println!("sending response_header=[{}]", response_header);
+                            //response_stream.write(response_header.as_bytes()).unwrap();
+
                             let response_items = get_response_items();
-                            let response_footer = get_response_footer();
                             for response_item in response_items.iter() {
+                                let response_item_len_msg =
+                                    if opt.zero_fill_lens {
+                                        format!("{:08x}", response_item.len())
+                                    } else {
+                                        format!("{:8x}", response_item.len())
+                                    };
+                                println!("sending response_item_len=[{}]", response_item_len_msg);
+                                request_stream.write(response_item_len_msg.as_bytes()).unwrap();
+
                                 println!("sending response_item=[{}]", response_item);
                                 response_stream.write(response_item.as_bytes()).unwrap();
                             }
-                            println!("sending response_footer=[{}]", response_footer);
-                            response_stream.write(response_footer.as_bytes()).unwrap();
-                            response_stream.flush().unwrap();
+
+                            //let response_footer = get_response_footer();
+                            //println!("sending response_footer=[{}]", response_footer);
+                            //response_stream.write(response_footer.as_bytes()).unwrap();
+                            //response_stream.flush().unwrap();
                         }
                     }
                     Err(e) => {

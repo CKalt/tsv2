@@ -1,11 +1,20 @@
     Finished release [optimized] target(s) in 0.01s
-     Running `target/release/tsv2 --input-port 9090 --output-port 9091`
-opt=Opt { input_port: 9090, output_port: 9091, host: "localhost" }
-accepting request connections on localhost:9090
-accepting response connections on localhost:9091
-8 bytes read = [48, 48, 48, 48, 48, 48, 97, 53]
-converts to hex str=000000a5 or bytes_to_read=165
-165 bytes received=[{"archiveFilename":"Archive_211001_140321","archivePath":"./path/to/archive/file/","command":"RSHOT","holeNumber":"hole3","objectType":"eventJSON","siteCode":"ds12"}]
+     Running `target/release/tsv2`
+opt=Opt { input_port: 8080, output_port: 8081, host: "localhost", zero_fill_lens: false }
+accepting request connections on localhost:8080
+accepting response connections on localhost:8081
+8 bytes read = [48, 48, 48, 48, 48, 48, 99, 52]
+converts to hex str=000000c4 or bytes_to_read=196
+196 bytes received=[
+{
+  "command": "RSHOT",
+  "objectType": "eventJSON",
+  "siteCode": "ds12", 
+  "holeNumber": "hole3",  
+  "archiveFilename": "Archive_211001_140321", 
+  "archivePath": "./path/to/archive/file/"
+}
+]
 Received Request Json Parsed: {
   "archiveFilename": "Archive_211001_140321",
   "archivePath": "./path/to/archive/file/",
@@ -15,14 +24,8 @@ Received Request Json Parsed: {
   "siteCode": "ds12"
 }
 valid JSON
-accepting response connections on 9091
-sending response_header=[
-{
-  "holeNumber": "hole12",
-  "archiveFilename": "Archive_211001_140321",
-  "archiveTickCount": "845"
-}
-]
+accepting response connections on 8081
+sending response_item_len=[     1fb]
 sending response_item=[
 {
    "confidence" : [
@@ -58,6 +61,7 @@ sending response_item=[
    ]
 }
 ]
+sending response_item_len=[     1e1]
 sending response_item=[
 {
    "confidence" : [
@@ -93,6 +97,7 @@ sending response_item=[
    ]
 }
 ]
+sending response_item_len=[     1d2]
 sending response_item=[
 {
    "confidence" : [
@@ -128,6 +133,7 @@ sending response_item=[
    ]
 }
 ]
+sending response_item_len=[     1d0]
 sending response_item=[
 {
    "confidence" : [
@@ -161,12 +167,5 @@ sending response_item=[
       0.153994787065098,
       0
    ]
-}
-]
-sending response_footer=[
-{
-  "holeNumber": "hole12",
-  "archiveFilename": "Archive_211001_140321",
-  "Results": "DONE"
 }
 ]
