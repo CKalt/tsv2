@@ -1,4 +1,5 @@
-    Finished release [optimized] target(s) in 0.01s
+   Compiling tsv2 v0.1.0 (/home/chris/projects/rust/tsv2)
+    Finished release [optimized] target(s) in 1.12s
      Running `target/release/tsv2`
 opt=Opt { input_port: 8080, output_port: 8081, host: "localhost", zero_fill_lens: false }
 accepting request connections on localhost:8080
@@ -25,7 +26,7 @@ Received Request Json Parsed: {
 }
 valid JSON
 accepting response connections on 8081
-sending response_item_len=[     1fb]
+sending response_item_len=[     507]
 sending response_item=[
 {
    "confidence" : [
@@ -61,7 +62,7 @@ sending response_item=[
    ]
 }
 ]
-sending response_item_len=[     1e1]
+sending response_item_len=[     481]
 sending response_item=[
 {
    "confidence" : [
@@ -97,7 +98,7 @@ sending response_item=[
    ]
 }
 ]
-sending response_item_len=[     1d2]
+sending response_item_len=[     466]
 sending response_item=[
 {
    "confidence" : [
@@ -133,7 +134,7 @@ sending response_item=[
    ]
 }
 ]
-sending response_item_len=[     1d0]
+sending response_item_len=[     464]
 sending response_item=[
 {
    "confidence" : [

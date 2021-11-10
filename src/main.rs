@@ -32,7 +32,9 @@ fn get_response_header<'a>() -> &'a str {
 }
 */
 
-fn get_response_items<'a>() -> Vec<&'a str> {
+fn get_response_items<'a>(command: Command) -> Vec<&'a str> {
+    match command {
+        Fetch =>
     vec![r#"
 {
    "confidence" : [
@@ -169,7 +171,15 @@ fn get_response_items<'a>() -> Vec<&'a str> {
       0
    ]
 }
-"#]
+"#],
+        Xfer => vec![
+r#"
+"archive_1_name",
+"archive_2_name",
+"archive_3_name"
+"#],
+    }
+
 }
 
 /*
@@ -199,21 +209,37 @@ fn get_url(host: &String, port: u32) -> String {
     format!("{}:{}", host, port)
 }
 
+enum Command {
+    Fetch,
+    Xfer
+}
+use Command::*;
+
 /// parse_json_request: parse json request
 /// return value is error state (true for error)
-fn parse_json_request<'a>(r: &'a str) -> bool {
+fn parse_json_request<'a>(r: &'a str) -> Option<Command> {
     let r_json = serde_json::from_str::<Value>(&r);
     match r_json {
         Ok(json) => {
             let pp =
                 serde_json::to_string_pretty(&json).unwrap();
             println!("Received Request Json Parsed: {}", pp);
-            false
+
+            let req_obj = json.as_object().expect("request not JSON object.");
+            assert!(req_obj.contains_key("command"));
+            let command: &str = req_obj["command"]
+                        .as_str()
+                        .expect("request command not str");
+            match command {
+                "FETCH" => Some(Fetch),
+                "XFER" => Some(Xfer),
+                _ => None,
+            }
         },
         Err(e) => {
             println!("Error: parsing json request: {}", e);
             println!("{:?}", r.as_bytes());
-            true
+            None
         }
     }
 }
@@ -243,15 +269,14 @@ fn handle_connections(request_listener: TcpListener,
                 let request = str::from_utf8(&request_buf).unwrap();
                 println!("{} bytes received=[{}]", bytes_to_read, request);
 
-                let error = parse_json_request(&request);
+                let opt_command = parse_json_request(&request);
 
-                println!("{}", if error { "invalid JSON" } else { "valid JSON" });
                 println!("accepting response connections on {}", opt.output_port);
 
                 let response_stream = response_listener.accept();
                 match response_stream {
                     Ok((mut response_stream, _addr)) => {
-                        if error {
+                        if let None = opt_command {
                             let error_response = get_error_response();
                             response_stream.write(error_response.as_bytes()).unwrap();
                         } else {
@@ -259,25 +284,27 @@ fn handle_connections(request_listener: TcpListener,
                             //println!("sending response_header=[{}]", response_header);
                             //response_stream.write(response_header.as_bytes()).unwrap();
 
-                            let response_items = get_response_items();
-                            for response_item in response_items.iter() {
-                                let response_item_len_msg =
-                                    if opt.zero_fill_lens {
-                                        format!("{:08x}", response_item.len())
-                                    } else {
-                                        format!("{:8x}", response_item.len())
-                                    };
-                                println!("sending response_item_len=[{}]", response_item_len_msg);
-                                request_stream.write(response_item_len_msg.as_bytes()).unwrap();
+                            if let Some(command) = opt_command {
+                                let response_items = get_response_items(command);
+                                for response_item in response_items.iter() {
+                                    let response_item_len_msg =
+                                        if opt.zero_fill_lens {
+                                            format!("{:08}", response_item.len())
+                                        } else {
+                                            format!("{:8}", response_item.len())
+                                        };
+                                    println!("sending response_item_len=[{}]", response_item_len_msg);
+                                    response_stream.write(response_item_len_msg.as_bytes()).unwrap();
 
-                                println!("sending response_item=[{}]", response_item);
-                                response_stream.write(response_item.as_bytes()).unwrap();
+                                    println!("sending response_item=[{}]", response_item);
+                                    response_stream.write(response_item.as_bytes()).unwrap();
+                                }
+
+                                //let response_footer = get_response_footer();
+                                //println!("sending response_footer=[{}]", response_footer);
+                                //response_stream.write(response_footer.as_bytes()).unwrap();
+                                //response_stream.flush().unwrap();
                             }
-
-                            //let response_footer = get_response_footer();
-                            //println!("sending response_footer=[{}]", response_footer);
-                            //response_stream.write(response_footer.as_bytes()).unwrap();
-                            //response_stream.flush().unwrap();
                         }
                     }
                     Err(e) => {
