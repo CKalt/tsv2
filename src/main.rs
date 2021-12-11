@@ -216,36 +216,45 @@ fn handle_connections(request_listener: TcpListener,
                       response_listener: TcpListener,
                       opt: Opt) {
 
+    println!("TP000: waiting for incoming connection on request_stream");
     for request_stream in request_listener.incoming() {
         match request_stream {
             Ok(mut request_stream) => {
                 // read exactly 8 bytes for subsequent content length
                 // and convert them from a hex number to a usize
                 let mut len_buf: [u8; 8] = [0; 8];
+                println!("TP001: calling req-strm read_exact to obtain <length-method> \n\
+                          bug len={:?}", len_buf.len());
                 request_stream.read_exact(&mut len_buf).unwrap();
-                println!("8 bytes read = {:?}", len_buf);
+                println!("TP001.1: returned <length message> got len={} \n\
+                          bytes read_exact buf={:?}",
+                    len_buf.len(), len_buf);
 
                 let len_str = str::from_utf8(&len_buf).unwrap();
                 let bytes_to_read: usize
                     = usize::from_str_radix(len_str, 16).unwrap();
-                println!("converts to hex str={} or bytes_to_read={}", len_str,
-                    bytes_to_read);
+                println!("TP001.2: converts to hex str={} or bytes_to_read={}",
+                    len_str, bytes_to_read);
 
                 // read exactly `bytes_to_read` len and error if not 
                 // valid json
                 let mut request_buf = vec![0u8; bytes_to_read];
+                println!("TP002: calling req-strm read_exact on request port \n\
+                          into buffer size={} ",
+                        request_buf.len());
                 request_stream.read_exact(&mut request_buf).unwrap();
                 let request = str::from_utf8(&request_buf).unwrap();
-                println!("{} bytes received=[{}]", bytes_to_read, request);
 
+                println!("TP002.1: {} bytes received as request = [{}]", bytes_to_read, request);
                 let error = parse_json_request(&request);
-
                 println!("{}", if error { "invalid JSON" } else { "valid JSON" });
-
 
                 println!("accepting response connections on {}", opt.output_port);
 
+                println!("TP003: accepting connection for response_stream");
+
                 let response_stream = response_listener.accept();
+                println!("TP003.1: accepted connection for response_stream");
                 match response_stream {
                     Ok((mut response_stream, _addr)) => {
                         if error {
@@ -253,12 +262,43 @@ fn handle_connections(request_listener: TcpListener,
                             response_stream.write(error_response.as_bytes()).unwrap();
                         } else {
                             let response_header = get_response_header();
-                            println!("sending response_header=[{}]", response_header);
+
+                            // first send len msg for response header.
+                            let len_msg = format!("{:08x}", response_header.len());
+                            println!("TP004: response_stream write len msg for\n\
+                                      response header len={} msg={}",
+                                response_header.len(),
+                                len_msg);
+                            let wresult = response_stream.write(len_msg.as_bytes());
+                            if let Err(e) = wresult {
+                                panic!("error writing len_msg: e={}", e);
+                            }
+
+                            // now send the header itself
+                            println!("TP005: sending response_header=[{}]", response_header);
                             response_stream.write(response_header.as_bytes()).unwrap();
+                            println!("TP005.1: send returned");
                             let response_items = get_response_items();
                             let response_footer = get_response_footer();
+
+                            let mut tp_i = 6;
+
                             for response_item in response_items.iter() {
-                                println!("sending response_item=[{}]", response_item);
+                                // first send len msg for response item.
+                                let len_msg = format!("{:08x}", response_item.len());
+                                println!("TP00{}: response_stream write len msg for\n\
+                                          response header len={} msg={}",
+                                    tp_i,
+                                    response_header.len(),
+                                    len_msg);
+                                let wresult = response_stream.write(len_msg.as_bytes());
+                                if let Err(e) = wresult {
+                                    panic!("error writing len_msg: e={}", e);
+                                }
+
+                                tp_i += 1;
+
+                                println!("TP00{}: sending response_item=[{}]", tp_i, response_item);
                                 response_stream.write(response_item.as_bytes()).unwrap();
                             }
                             println!("sending response_footer=[{}]", response_footer);
