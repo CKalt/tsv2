@@ -281,9 +281,9 @@ fn handle_connections(request_listener: TcpListener,
                             let response_items = get_response_items();
                             let response_footer = get_response_footer();
 
-                            let mut tp_i = 6;
-
+                            let mut tp_i = 5;
                             for response_item in response_items.iter() {
+                                tp_i += 1;
                                 // first send len msg for response item.
                                 let len_msg = format!("{:08x}", response_item.len());
                                 println!("TP00{}: response_stream write len msg for\n\
@@ -297,11 +297,21 @@ fn handle_connections(request_listener: TcpListener,
                                 }
 
                                 tp_i += 1;
-
-                                println!("TP00{}: sending response_item=[{}]", tp_i, response_item);
+                                println!("TP00{}: sending response_item=[{}]",
+                                    tp_i, response_item);
                                 response_stream.write(response_item.as_bytes()).unwrap();
                             }
-                            println!("sending response_footer=[{}]", response_footer);
+                            tp_i += 1;
+                            let len_msg = format!("{:08x}", response_footer.len());
+                            println!("TP00{}: response_stream write len msg for\n\
+                                      response footer len={} msg={}",
+                                tp_i,
+                                response_footer.len(),
+                                len_msg);
+
+                            tp_i += 1;
+                            println!("TP00{}: sending response_footer=[{}]",
+                                tp_i, response_footer);
                             response_stream.write(response_footer.as_bytes()).unwrap();
                             response_stream.flush().unwrap();
                         }
